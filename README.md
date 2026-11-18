@@ -36,8 +36,8 @@ Moderation commands check that both you and the bot outrank the target. Every ki
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/tiger-bot.git
-    cd tiger-bot
+    git clone https://github.com/Prarambha369/Tiger-Bot.git
+    cd Tiger-Bot
     ```
 
 2. Install dependencies:
