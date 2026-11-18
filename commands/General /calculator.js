@@ -1,4 +1,4 @@
-const { MessageActionRow, MessageButton } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const math = require('mathjs');
 
 module.exports = {
@@ -11,115 +11,95 @@ module.exports = {
 
     run: async (client, interaction) => {
         const rows = [
-            new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: 'clear',
-                    style: 'DANGER',
-                    label: "AC",
-                }),
-                new MessageButton({
-                    customId: '(',
-                    style: 'PRIMARY',
-                    label: "(",
-                }),
-                new MessageButton({
-                    customId: ')',
-                    style: 'PRIMARY',
-                    label: ")",
-                }),
-                new MessageButton({
-                    customId: '/',
-                    style: 'PRIMARY',
-                    label: "➗",
-                })
+            new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId('clear')
+                    .setStyle(ButtonStyle.Danger)
+                    .setLabel("AC"),
+                new ButtonBuilder()
+                    .setCustomId('(')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("("),
+                new ButtonBuilder()
+                    .setCustomId(')')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel(")"),
+                new ButtonBuilder()
+                    .setCustomId('/')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("➗")
             ]),
-            new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: '7',
-                    style: 'SECONDARY',
-                    label: "7",
-                }),
-                new MessageButton({
-                    customId: '8',
-                    style: 'SECONDARY',
-                    label: "8",
-                }),
-                new MessageButton({
-                    customId: '9',
-                    style: 'SECONDARY',
-                    label: "9",
-                }),
-                new MessageButton({
-                    customId: '*',
-                    style: 'PRIMARY',
-                    label: "✖️",
-                })
+            new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId('7')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("7"),
+                new ButtonBuilder()
+                    .setCustomId('8')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("8"),
+                new ButtonBuilder()
+                    .setCustomId('9')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("9"),
+                new ButtonBuilder()
+                    .setCustomId('*')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("✖️")
             ]),
-            new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: '4',
-                    style: 'SECONDARY',
-                    label: "4",
-                }),
-                new MessageButton({
-                    customId: '5',
-                    style: 'SECONDARY',
-                    label: "5",
-                }),
-                new MessageButton({
-                    customId: '6',
-                    style: 'SECONDARY',
-                    label: "6",
-                }),
-                new MessageButton({
-                    customId: '-',
-                    style: 'PRIMARY',
-                    label: "➖",
-                })
+            new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId('4')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("4"),
+                new ButtonBuilder()
+                    .setCustomId('5')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("5"),
+                new ButtonBuilder()
+                    .setCustomId('6')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("6"),
+                new ButtonBuilder()
+                    .setCustomId('-')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("➖")
             ]),
-            new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: '1',
-                    style: 'SECONDARY',
-                    label: "1",
-                }),
-                new MessageButton({
-                    customId: '2',
-                    style: 'SECONDARY',
-                    label: "2",
-                }),
-                new MessageButton({
-                    customId: '3',
-                    style: 'SECONDARY',
-                    label: "3",
-                }),
-                new MessageButton({
-                    customId: '+',
-                    style: 'PRIMARY',
-                    label: "➕",
-                })
+            new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId('1')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("1"),
+                new ButtonBuilder()
+                    .setCustomId('2')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("2"),
+                new ButtonBuilder()
+                    .setCustomId('3')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("3"),
+                new ButtonBuilder()
+                    .setCustomId('+')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("➕")
             ]),
-            new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: 'backspace',
-                    style: 'PRIMARY',
-                    label: "⬅️",
-                }),
-                new MessageButton({
-                    customId: '0',
-                    style: 'SECONDARY',
-                    label: "0",
-                }),
-                new MessageButton({
-                    customId: '.',
-                    style: 'PRIMARY',
-                    label: "⚫",
-                }),
-                new MessageButton({
-                    customId: 'result',
-                    style: 'SUCCESS',
-                    label: "=",
-                })
+            new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId('backspace')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("⬅️"),
+                new ButtonBuilder()
+                    .setCustomId('0')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("0"),
+                new ButtonBuilder()
+                    .setCustomId('.')
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("⚫"),
+                new ButtonBuilder()
+                    .setCustomId('result')
+                    .setStyle(ButtonStyle.Success)
+                    .setLabel("=")
             ]),
         ];
 
@@ -127,7 +107,7 @@ module.exports = {
             components: rows,
             embeds: [{
                 description: "```\nResults will be displayed here\n```",
-                color: "BLUE"
+                color: 0x0000FF
             }],
             fetchReply: true,
         });
@@ -166,7 +146,7 @@ module.exports = {
 
             i.update({
                 embeds: [{
-                    color: "BLUE",
+                    color: 0x0000FF,
                     description: `\`\`\`\n${data || extra}\n\`\`\``
                 }]
             })
@@ -174,13 +154,12 @@ module.exports = {
 
         col.on('end', () => {
             msg.edit({
-                components: [new MessageActionRow().addComponents([
-                    new MessageButton({
-                        label: "The Calculator Ended",
-                        disabled: true,
-                        style: "DANGER",
-                        customId: "_1_"
-                    })
+                components: [new ActionRowBuilder().addComponents([
+                    new ButtonBuilder()
+                        .setLabel("The Calculator Ended")
+                        .setDisabled(true)
+                        .setStyle(ButtonStyle.Danger)
+                        .setCustomId("_1_")
                 ])]
             })
         })

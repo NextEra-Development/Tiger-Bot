@@ -1,10 +1,10 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { ChannelType, PermissionsBitField, SlashCommandBuilder } = require('discord.js');
 const guildConfig = require('../../models/guildConfig');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pokemon')
-        .setDescription('Setup the pokemon game for your server')
+        .setDescription('Setup the pokemon game for your server (Requires Manage Server)')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('enable-spawn')
@@ -30,8 +30,9 @@ module.exports = {
                     option
                         .setName('channel')
                         .setDescription('Mention or give ID, 0 for same channel spawn')
-                        .setRequired(true))),
-    permissions: ["MANAGE_SERVER"],
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionsBitField.Flags.ManageGuild),
+    permissions: ["MANAGE_GUILD"],
 
     async execute(interaction) {
         await interaction.deferReply();
@@ -98,7 +99,7 @@ module.exports = {
 
 // Helper functions
 function isValidChannel(channel) {
-    return channel && (channel.type === "GUILD_TEXT" || channel.type === "GUILD_NEWS");
+    return channel && (channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildNews);
 }
 
 function getChannel(raw, interaction) {

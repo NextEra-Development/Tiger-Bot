@@ -4,7 +4,8 @@
     "description": "An Advanced Beta Multipurpose Bot with Slash Commands",
     "main": "index.js",
     "scripts": {
-        "dev": "node index.js"
+        "dev": "node index.js",
+        "deploy-commands": "node deploy-commands.js"
     },
     "author": "MisterBashyal",
     "dependencies": {
@@ -20,5 +21,8 @@
         "mongoose": "^6.13.8",
         "node-emoji": "^2.2.0",
         "pokecord": "^1.0.1"
+    },
+    "optionalDependencies": {
+        "@napi-rs/canvas": "^0.1.65"
     }
 }

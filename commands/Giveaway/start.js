@@ -1,4 +1,5 @@
 const Discord = require("discord.js")
+const { ChannelType, EmbedBuilder, MessageFlags, PermissionsBitField } = require("discord.js")
 const messages = require("../../utils/message");
 const ms = require("ms")
 module.exports = {
@@ -10,49 +11,49 @@ module.exports = {
     {
       name: 'duration',
       description: 'How long the giveaway should last for. Example values: 1m, 1h, 1d',
-      type: 'STRING',
+      type: 3,
       required: true
     },
     {
       name: 'winners',
       description: 'How many winners the giveaway should have',
-      type: 'INTEGER',
+      type: 4,
       required: true
     },
     {
       name: 'prize',
       description: 'What the prize of the giveaway should be',
-      type: 'STRING',
+      type: 3,
       required: true
     },
     {
       name: 'channel',
       description: 'The channel to start the giveaway in',
-      type: 'CHANNEL',
+      type: 7,
       required: true
     },
     {
       name: 'bonusrole',
       description: 'Role which would recieve bonus entries',
-      type: 'ROLE',
+      type: 8,
       required: false
     },
     {
       name: 'bonusamount',
       description: 'The amount of bonus entries the role will recieve',
-      type: 'INTEGER',
+      type: 4,
       required: false
     },
     {
       name: 'invite',
       description: 'Invite of the server you want to add as giveaway joining requirement',
-      type: 'STRING',
+      type: 3,
       required: false
     },
     {
       name: 'role',
       description: 'Role you want to add as giveaway joining requirement',
-      type: 'ROLE',
+      type: 8,
       required: false
     },
   ]},
@@ -60,10 +61,10 @@ module.exports = {
   run: async (client, interaction) => {
 
     // If the member doesn't have enough permissions
-    if (!interaction.member.permissions.has('MANAGE_MESSAGES') && !interaction.member.roles.cache.some((r) => r.name === "Giveaways")) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageMessages) && !interaction.member.roles.cache.some((r) => r.name === "Giveaways")) {
       return interaction.reply({
         content: ':x: You need to have the manage messages permissions to start giveaways.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -72,16 +73,16 @@ module.exports = {
     const giveawayWinnerCount = interaction.options.getInteger('winners');
     const giveawayPrize = interaction.options.getString('prize');
 
-    if (!giveawayChannel.isText()) {
+    if (!giveawayChannel.isTextBased() || giveawayChannel.type !== ChannelType.GuildText) {
       return interaction.reply({
         content: ':x: Please select a text channel!',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
    if(isNaN(ms(giveawayDuration))) {
     return interaction.reply({
       content: ':x: Please select a valid duration!',
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
     if (giveawayWinnerCount < 1) {
@@ -99,13 +100,13 @@ module.exports = {
       if (!bonusEntries) {
         return interaction.reply({
           content: `:x: You must specify how many bonus entries would ${bonusRole} recieve!`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
 
 
-    await interaction.deferReply({ ephemeral: true })
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
     let reqinvite;
     if (invite) {
       let invitex = await client.fetchInvite(invite)
@@ -116,7 +117,7 @@ module.exports = {
       if (!client_is_in_server) {
         return interaction.editReply({
           embeds: [{
-            color: "#2F3136",
+            color: 0x2F3136,
             author: {
               name: client.user.username,
               iconURL: client.user.displayAvatarURL() 
@@ -158,7 +159,7 @@ module.exports = {
       bonusEntries: [
         {
           // Members who have the role which is assigned to "rolename" get the amount of bonus entries which are assigned to "BonusEntries"
-          bonus: new Function('member', `return member.roles.cache.some((r) => r.name === \'${bonusRole ?.name}\') ? ${bonusEntries} : null`),
+          bonus: (member) => (member.roles.cache.some((r) => r.name === bonusRole?.name) ? Number(bonusEntries) : null),
           cumulative: false
         }
       ],
@@ -172,11 +173,11 @@ module.exports = {
     interaction.editReply({
       content:
         `Giveaway started in ${giveawayChannel}!`,
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     })
 
     if (bonusRole) {
-      let giveaway = new Discord.MessageEmbed()
+      let giveaway = new EmbedBuilder()
         .setAuthor({ name: `Bonus Entries Alert!` })
         .setDescription(
           `**${bonusRole}** Has **${bonusEntries}** Extra Entries in this giveaway!`

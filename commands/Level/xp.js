@@ -1,9 +1,10 @@
+const { ChannelType, MessageFlags, PermissionsBitField } = require('discord.js');
 const configs = require('../../models/guildConfig');
 
 module.exports = {
     data: {
         name: "xp",
-        description: "Manage xp system of your server",
+        description: "Manage xp system of your server (Requires Manage Server)",
         options: [{
             name: "enable",
             type: 1,
@@ -127,7 +128,8 @@ module.exports = {
             }]
         }]
     },
-    permissions: ["MANAGE_SERVER"],
+    default_member_permissions: new PermissionsBitField([PermissionsBitField.Flags.ManageGuild]).bitfield.toString(),
+    permissions: ["MANAGE_GUILD"],
 
     /**
      * 
@@ -135,7 +137,7 @@ module.exports = {
      * @param {CommandInteraction} interaction 
      */
     run: async (client, interaction) => {
-        await interaction.reply({ content: `${client.user.username} is thinking...` });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const option = interaction.options.getSubcommand(true).toLowerCase(),
             data = await configs.findOne({ id: interaction.guild.id }) || await configs.create({ id: interaction.guild.id });
@@ -199,26 +201,26 @@ module.exports = {
         } else if (option === "level-up-channel") {
             let c = interaction.guild.channels.cache.get(channel) || interaction.guild.channels.cache.get(channel.substring(2, channel.length - 1))
 
-            if ((!c && channel !== "0") || (c && channel !== "0" && c.type !== "GUILD_TEXT"))
+            if ((!c && channel !== "0") || (c && channel !== "0" && c.type !== ChannelType.GuildText))
                 return interaction.editReply({ content: "Either type 0 for same channel message or give a valid Text channel ID" });
 
             interaction.editReply({ content: "XP level up message channel is now changed" });
 
             await configs.findOneAndUpdate({ id: interaction.guild.id }, { "xpLevelUp.channel": channel === "0" ? channel : c.id })
         } else if (option === "ignore-channel-add") {
-            if (data.ignoreXP.includes("channel"))
+            if ((data.ignoreXP || []).includes(channel))
                 return interaction.editReply({ content: "Yo nerd this channel is already disabled for xp increment" });
 
             interaction.editReply({ content: "Now the mentioned channel will not get xp incremenets" });
 
-            await configs.findOneAndUpdate({ id: interaction.guild.id }, { $push: { ignoreXP: channel.id } })
+            await configs.findOneAndUpdate({ id: interaction.guild.id }, { $push: { ignoreXP: channel } })
         } else if (option === "ignore-channel-remove") {
-            if (!data.ignoreXP.includes("channel"))
+            if (!(data.ignoreXP || []).includes(channel))
                 return interaction.editReply({ content: "Yo nerd, this channel is not disabled for xp increment" });
 
             interaction.editReply({ content: "Now the mentioned channel will get xp incremenets" });
 
-            await configs.findOneAndUpdate({ id: interaction.guild.id }, { $pull: { ignoreXP: channel.id } })
+            await configs.findOneAndUpdate({ id: interaction.guild.id }, { $pull: { ignoreXP: channel } })
         } else if (option === "level-up-reward-message") {
             if (!s_message && !f_message) return interaction.editReply("Either provide success message or failed message.");
 

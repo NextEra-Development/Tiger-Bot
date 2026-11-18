@@ -1,6 +1,7 @@
-const { MessageActionRow, MessageButton } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags, PermissionsBitField } = require("discord.js");
 const guildConfig = require("../../models/guildConfig")
 const suggestions = require("../../models/suggestion")
+const { error, success } = require("../../utils/response");
 
 module.exports = {
     data: {
@@ -58,7 +59,7 @@ module.exports = {
     timeout: 1000,
 
     run: async (client, interaction) => {
-        await interaction.deferReply();
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const option = interaction.options.getSubcommand(),
             suggestion = interaction.options.getString("suggestion"),
@@ -72,28 +73,25 @@ module.exports = {
 
         if (option === "create") {
             if (!c) return interaction.editReply({
-                embeds: [{
-                    title: " <:cros:961414487859146783> Suggestion Not Setuped"
-                }]
+                embeds: [error('The suggestion channel is not set up yet.', 'Ask a moderator to run `/suggestion set-channel`.')]
             });
 
-            const row = new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: "1",
-                    label: "⬆ Up Vote",
-                    style: "SECONDARY"
-                }), new MessageButton({
-                    customId: "2",
-                    label: "⬇ Down Vote",
-                    style: "SECONDARY"
-                })
+            const row = new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId("suggest_up")
+                    .setLabel("⬆ Up Vote")
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId("suggest_down")
+                    .setLabel("⬇ Down Vote")
+                    .setStyle(ButtonStyle.Secondary)
             ])
 
             const msg = await c.send({
                 components: [row],
                 embeds: [{
                     title: "New Suggestion!",
-                    color: "BLUE",
+                    color: 0x0000FF,
                     description: suggestion,
                     fields: [{
                         name: "Up Votes",
@@ -138,45 +136,34 @@ module.exports = {
             });
 
             interaction.editReply({
-                embeds: [{
-                    color: "GREEN",
-                    title: "<:tick:961414448520781864> Suggestion Created"
-                }]
+                embeds: [success('Your suggestion was created.')]
             })
         } else if (option === "reply") {
-            if (!interaction.member.permissions.has("MANAGE_GUILD")) return interaction.editReply({
-                embeds: [{
-                    title: "<:cros:961414487859146783> You are not allowed"
-                }]
+            if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) return interaction.editReply({
+                embeds: [error('You need Manage Server permission to reply to suggestions.')]
             });
 
             if (!sug) return interaction.editReply({
-                embeds: [{
-                    title: "<:cros:961414487859146783> Invalid Suggestion ID"
-                }]
+                embeds: [error('Invalid suggestion ID.', 'Double-check the ID and try again.')]
             });
 
             const msg = await interaction.guild.channels.cache.get(sug.channel)?.messages?.fetch(sug.message);
 
             if (!msg) return interaction.editReply({
-                embeds: [{
-                    title: "<:cros:961414487859146783> Suggestion Message is Deleted",
-                    description: "This suggestion can no longer be replied"
-                }]
+                embeds: [error('That suggestion message was deleted.', 'This suggestion can no longer be replied to.')]
             });
 
-            const row = new MessageActionRow().addComponents([
-                new MessageButton({
-                    customId: "1",
-                    label: "⬆ Up Vote",
-                    style: "SECONDARY",
-                    disabled: true
-                }), new MessageButton({
-                    customId: "2",
-                    label: "⬇ Down Vote",
-                    style: "SECONDARY",
-                    disabled: true
-                })
+            const row = new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                    .setCustomId("suggest_up")
+                    .setLabel("⬆ Up Vote")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId("suggest_down")
+                    .setLabel("⬇ Down Vote")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true)
             ]);
 
             msg.embeds[0].fields[2].value = status === "1" ? "<:tick:961414448520781864> Accepted" : "<:cros:961414487859146783> Rejected";
@@ -191,31 +178,21 @@ module.exports = {
             });
 
             interaction.editReply({
-                embeds: [{
-                    color: "GREEN",
-                    title:"<:tick:961414448520781864> Suggestion Replied"
-                }]
+                embeds: [success('Suggestion replied.')]
             })
         } else if (option === "set-channel") {
-            if (!interaction.member.permissions.has("MANAGE_GUILD")) return interaction.editReply({
-                embeds: [{
-                    title: "<:cros:961414487859146783> You are not allowed"
-                }]
+            if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) return interaction.editReply({
+                embeds: [error('You need Manage Server permission to change the suggestion channel.')]
             });
 
-            if (channel.type !== "GUILD_TEXT") return interaction.editReply({
-                embeds: [{
-                    title: "<:cros:961414487859146783> Invalid Channel Type"
-                }]
+            if (channel.type !== ChannelType.GuildText) return interaction.editReply({
+                embeds: [error('Invalid channel type.', 'Please pick a text channel.')]
             });
 
             await guildConfig.findOneAndUpdate({ id: interaction.guildId }, { suggestion: channel.id });
 
             interaction.editReply({
-                embeds: [{
-                    color: "GREEN",
-                    title: "<:tick:961414448520781864> Suggestion Setuped!  "
-                }]
+                embeds: [success('Suggestion channel set up.', 'New suggestions will now be posted there.')]
             })
         }
     }

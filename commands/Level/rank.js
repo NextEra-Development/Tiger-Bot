@@ -1,5 +1,5 @@
 const users = require('../../models/user_xp');
-const { MessageAttachment, TextChannel, MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: {
@@ -33,12 +33,12 @@ module.exports = {
         let reqXP = 100;
 
         for (let i = 1; i <= data.level; i++)reqXP += 5 * (i ^ 2) + (50 * i) + 100;
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
      .setTitle('USERS DATA ')
      .setDescription(`USER LEVEL = ${data.level}\n\nUSER XP = ${data.xp}/${reqXP}`) 
     .setThumbnail(`${interaction.user.displayAvatarURL({ dynamic: true })}`)
       .setColor('#2f3136')
       .setTimestamp()
- interaction.reply({ embeds: [embed], components:[AvatarButtons] })
+ interaction.reply({ embeds: [embed] })
     }
 }

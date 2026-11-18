@@ -1,11 +1,12 @@
 const { find } = require('node-emoji');
 const polls = require("../../models/polls")
-const { MessageButton, MessageActionRow } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, PermissionsBitField } = require('discord.js');
+const { success, error } = require('../../utils/response');
 
 module.exports = {
     data: {
         name: "poll",
-        description: "Manage polls of your server",
+        description: "Manage polls of your server (Requires Manage Server)",
         options: [{
             name: "create",
             type: 1,
@@ -44,10 +45,11 @@ module.exports = {
         }],
     },
     timeout: 5000,
+    default_member_permissions: new PermissionsBitField([PermissionsBitField.Flags.ManageGuild]).bitfield.toString(),
     permissions: ["MANAGE_GUILD"],
 
     run: async (client, interaction) => {
-        await interaction.deferReply();
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const option = interaction.options.getSubcommand();
         const channel = interaction.options.getChannel("channel");
@@ -75,10 +77,10 @@ async function handleCreatePoll(params) {
         return sendInvalidOptionsReply(interaction);
     }
 
-    const rows = createMessageActionRows({ client, rawOptions: options.rawOptions, cEmojis: options.cEmojis, _emoji, emojis });
+    const rows = createMessageActionRows({ guild: interaction.guild, rawOptions: options.rawOptions, cEmojis: options.cEmojis, _emoji, emojis });
 
     try {
-        const v = await sendPollMessage({ channel, question, rawOptions: options.rawOptions, cEmojis: options.cEmojis, rows });
+        const v = await sendPollMessage({ channel, question, rawOptions: options.rawOptions, cEmojis: options.cEmojis, emojis, rows });
         await savePollToDatabase({ question, messageId: v.id, channelId: channel.id, guildId: interaction.guildId, emojis });
         sendPollCreatedReply(interaction, v.url);
     } catch (e) {
@@ -99,38 +101,31 @@ function validateOptions(rawOptions) {
 
 function sendInvalidOptionsReply(interaction) {
     return interaction.editReply({
-        embeds: [{
-            color: "RED",
-            title: "❌ Invalid Options",
-            description: "You need at least 2 options and a maximum of 25 options, You need to separate options via `|`"
-        }]
+        embeds: [error('Invalid options.', 'Provide 2 to 25 options separated by `|`.')]
     });
 }
 
-function createMessageActionRows({ client, rawOptions, cEmojis, _emoji, emojis }) {
-    const rows = [new MessageActionRow()];
+function createMessageActionRows({ guild, rawOptions, cEmojis, _emoji, emojis }) {
+    const rows = [new ActionRowBuilder()];
     for (let i = 0; i < rawOptions.length; i++) {
         let ind = Math.floor(i / 5);
-        emojis.push(fixEmoji(client, cEmojis[i]) || _emoji[i]);
+        emojis.push(fixEmoji(guild, cEmojis[i]) || _emoji[i]);
 
-        const button = new MessageButton({
-            customId: emojis[i],
-            emoji: emojis[i],
-            label: "0",
-            style: "SECONDARY"
-        });
+        const button = new ButtonBuilder()
+            .setCustomId(`poll_${emojis[i]}`)
+            .setEmoji(emojis[i])
+            .setLabel("0")
+            .setStyle(ButtonStyle.Secondary);
 
-        rows[ind] ? rows[ind].addComponents(button) : rows[ind] = new MessageActionRow({
-            components: [button]
-        });
+        rows[ind] ? rows[ind].addComponents(button) : rows[ind] = new ActionRowBuilder().setComponents(button);
     }
     return rows;
 }
 
-async function sendPollMessage({ channel, question, rawOptions, cEmojis, rows }) {
+async function sendPollMessage({ channel, question, rawOptions, cEmojis, emojis, rows }) {
     return await channel.send({
         embeds: [{
-            color: "BLUE",
+            color: 0x0000FF,
             title: question.slice(0, 256),
             description: rawOptions.map((v, i) => `${cEmojis[i] || emojis[i]} ${v}`).join("\n"),
             timestamp: Date.now(),
@@ -156,39 +151,26 @@ async function savePollToDatabase({ question, messageId, channelId, guildId, emo
 
 function sendPollCreatedReply(interaction, url) {
     interaction.editReply({
-        embeds: [{
-            color: "GREEN",
-            title: "✅ Poll Created",
-            description: `Check the poll [here](${url})`
-        }]
+        embeds: [success(`Poll created. Check it [here](${url}).`)]
     });
 }
 
 function sendPollCreationErrorReply(interaction) {
     interaction.editReply({
-        embeds: [{
-            color: "RED",
-            title: "❌ Unable To Create The Poll",
-        }]
+        embeds: [error('Unable to create the poll.', 'Check my permissions in that channel and try again.')]
     });
 }
 
 async function handleEndPoll(interaction, poll, id) {
     if (!poll) {
         return interaction.editReply({
-            embeds: [{
-                color: "RED",
-                title: "❌ Invalid Poll Message ID",
-            }]
+            embeds: [error('Invalid poll message ID.', 'Double-check the ID and try again.')]
         });
     }
 
     if (poll.ended) {
         return interaction.editReply({
-            embeds: [{
-                color: "RED",
-                title: "❌ Poll is already Ended",
-            }]
+            embeds: [error('This poll is already ended.')]
         });
     }
 
@@ -196,11 +178,7 @@ async function handleEndPoll(interaction, poll, id) {
 
     if (!msg) {
         return interaction.editReply({
-            embeds: [{
-                color: "RED",
-                title: "❌ Poll Not Endable",
-                description: `Poll message is deleted, So it is no longer endable`
-            }]
+            embeds: [error('Poll message was deleted.', 'This poll can no longer be ended.')]
         });
     }
 
@@ -209,17 +187,14 @@ async function handleEndPoll(interaction, poll, id) {
     let winner = opt.filter(v => v.includes(x[0][0]));
 
     interaction.editReply({
-        embeds: [{
-            color: "GREEN",
-            title: "Poll Ended"
-        }]
+        embeds: [success('Poll ended.')]
     });
 
     msg.edit({
         components: [],
         embeds: [{
             title: msg.embeds[0].title,
-            color: "RED",
+            color: 0xFF0000,
             description: `**Poll ended**\nThe most voted option got ${x[0][1]} votes and it was:\n${winner}`,
             timestamp: Date.now(),
             footer: {
@@ -231,9 +206,9 @@ async function handleEndPoll(interaction, poll, id) {
     await polls.findOneAndUpdate({ message: id }, { ended: true });
 }
 
-function fixEmoji(client, emj = "") {
+function fixEmoji(guild, emj = "") {
     const e = find(emj)?.emoji;
-    const e2 = client.emojis.cache.find(v => v.toString() === emj);
+    const e2 = guild.emojis.cache.find(v => v.toString() === emj);
 
     return e2?.id || e;
 }

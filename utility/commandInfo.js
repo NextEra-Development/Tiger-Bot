@@ -8,9 +8,9 @@ module.exports = (command) => {
                 value: `\`${v.description}\``
             }
         }),
-        color: "BLUE"
+        color: 0x0000FF
     } : {
         title: "❌ Invalid command was provided",
-        color: "RED"
+        color: 0xFF0000
     }
 }

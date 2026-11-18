@@ -1,8 +1,8 @@
-const { Client } = require("discord.js");
+const { ActivityType, Client } = require("discord.js");
 
 module.exports = {
     data: {
-        name: "Owner",
+        name: "owner",
         description: "Change the status of Tiger Bot!",
         options: [{
             name: "status",
@@ -23,7 +23,7 @@ module.exports = {
 
         client.user.setActivity({
             name: interaction.options.getString("status", true),
-            type: "PLAYING"
+            type: ActivityType.Playing
         });
 
         interaction.reply({ content: `Status changed to  : ${interaction.options.getString("status")}` });

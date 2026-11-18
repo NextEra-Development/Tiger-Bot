@@ -1,9 +1,10 @@
+const { PermissionsBitField } = require('discord.js');
 const froms = ["all", "human", "bot"];
 
 module.exports = {
     data: {
         name: "roles",
-        description: "Manage roles of the server",
+        description: "Manage roles of the server (Requires Administrator)",
         options: [{
             name: "action",
             type: 3, // Corrected type to STRING (3)
@@ -29,6 +30,7 @@ module.exports = {
         }],
     },
     timeout: 100000,
+    default_member_permissions: new PermissionsBitField([PermissionsBitField.Flags.Administrator]).bitfield.toString(),
     permissions: ["ADMINISTRATOR"],
 
     run: async (client, interaction) => {
@@ -39,15 +41,15 @@ module.exports = {
         if (!froms.includes(from) && !interaction.guild.roles.cache.get(/\d+/.exec(from) + "")) return interaction.reply({
             embeds: [{
                 title: "❌ Invalid from value",
-                color: "RED",
+                color: 0xFF0000,
                 description: "It should be the role ID, against which you want to take the action\nOr you can type `huamn` for taking action against humans, `bot` for the bots and `all` for everyone"
             }]
         });
 
-        if (_for.position > interaction.guild.me.roles.highest.position && !interaction.guild.me.permissions.has("MANAGE_ROLES")) return interaction.reply({
+        if (_for.position > interaction.guild.members.me.roles.highest.position && !interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return interaction.reply({
             embeds: [{
                 title: "❌ Invalid Permissions",
-                color: "RED",
+                color: 0xFF0000,
                 description: "Either I do not have Manage Role permission, or the provided role is above my highest role"
             }]
         });
@@ -63,7 +65,7 @@ module.exports = {
 
         await interaction.reply({
             embeds: [{
-                color: "BLUE",
+                color: 0x0000FF,
                 title: `Changing roles for ${members.length} member`
             }]
         });
@@ -75,7 +77,7 @@ module.exports = {
 
         interaction.editReply({
             embeds: [{
-                color: "GREEN",
+                color: 0x00FF00,
                 title: "✅ Roles changed successfully"
             }]
         })

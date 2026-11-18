@@ -1,7 +1,7 @@
 const guildConfigs = require('../models/guildConfig');
 const users = require('../models/userConfig');
 const pokecord = require('pokecord');
-const { MessageEmbed, MessageCollector } = require('discord.js');
+const { EmbedBuilder, MessageCollector } = require('discord.js');
 
 module.exports = async (client, message) => {
     const p = "";
@@ -21,7 +21,7 @@ module.exports = async (client, message) => {
 
     const channel = message.guild.channels.cache.get(data.pokemon.spawnAt) || message.channel;
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setTitle("A new pokemon has appeared")
         .setImage(pokemon.imageURL)
         .setDescription(`Catch pokemon by typing \`${p}catch < pokemon name >\``).setColor('#353A3C');
@@ -60,7 +60,7 @@ module.exports = async (client, message) => {
         if (Date.now() - t < 10000) return msg.reply("You are on a timeout to use the hint command");
         t = Date.now();
 
-        let hint = pokemon.name, i = pokmeon.name.length / 2;
+        let hint = pokemon.name, i = pokemon.name.length / 2;
 
         while (--i >= 0) {
             let p = Math.floor(Math.random() * pokemon.length);

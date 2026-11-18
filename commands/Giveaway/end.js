@@ -1,3 +1,5 @@
+const { MessageFlags, PermissionsBitField } = require('discord.js');
+
 module.exports = {
   data: {
     name: "end",
@@ -7,7 +9,7 @@ module.exports = {
         {
             name: 'giveaway',
             description: 'The giveaway to end (message ID or giveaway prize)',
-            type: 'STRING',
+            type: 3,
             required: true
         }
     ]},
@@ -15,10 +17,10 @@ module.exports = {
     run: async (client, interaction) => {
 
         // If the member doesn't have enough permissions
-        if (!interaction.member.permissions.has('MANAGE_MESSAGES') && !interaction.member.roles.cache.some((r) => r.name === "Giveaways")) {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageMessages) && !interaction.member.roles.cache.some((r) => r.name === "Giveaways")) {
             return interaction.reply({
                 content: ':x: You need to have the manage messages permissions to end giveaways.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -35,14 +37,14 @@ module.exports = {
         if (!giveaway) {
             return interaction.reply({
                 content: 'Unable to find a giveaway for `' + query + '`.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (giveaway.ended) {
             return interaction.reply({
                 content: 'This giveaway has already ended!',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -55,8 +57,8 @@ module.exports = {
             })
             .catch((e) => {
                 interaction.reply({
-                    content: e,
-                    ephemeral: true
+                    content: `Error: ${e.message}`,
+                    flags: MessageFlags.Ephemeral
                 });
             });
 

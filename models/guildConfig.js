@@ -24,7 +24,22 @@ const guildStats = new Schema({
         message: {
             type: String,
             default: "Welcome {mention}, To **{server}**\nNow we are a family of {members}"
-        }
+        },
+        banner: {
+            type: Boolean,
+            default: true
+        },
+        background: String
+    },
+    // Roles given to every new (non-bot) member.
+    autorole: {
+        type: [String],
+        default: []
+    },
+    // Last moderation case number used in this guild.
+    caseCounter: {
+        type: Number,
+        default: 0
     },
 
     ignoreXP: [String],
@@ -98,7 +113,12 @@ const guildStats = new Schema({
         message: {
             type: String,
             default: `**{user}** left the server.`
-        }
+        },
+        banner: {
+            type: Boolean,
+            default: true
+        },
+        background: String
     },
     suggestion:String
 })

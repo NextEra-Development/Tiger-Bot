@@ -54,7 +54,7 @@ module.exports = {
                 msg.edit({
                     embeds: [{
                         title: "Trade Offer Expired",
-                        color: "#ff0000",
+                        color: 0xFF0000,
                         descrption: `Trade offer from ${interaction.user.username} is expired`
                     }]
                 })
@@ -94,7 +94,7 @@ module.exports = {
                         msg.edit({
                             embeds: [{
                                 title: "Trade Offer Expired",
-                                color: "#ff0000",
+                                color: 0xFF0000,
                                 descrption: `You took way too much time to respond`
                             }]
                         })

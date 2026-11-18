@@ -1,10 +1,10 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { ChannelType, SlashCommandBuilder } = require('discord.js');
 const stats = require('../../models/guildStats');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('stats')
-        .setDescription('Configure the stats for your server')
+        .setDescription('Configure the stats for your server (Requires Manage Server)')
         .addStringOption(option =>
             option.setName('type')
                 .setDescription('What kind of stats you want to setup')
@@ -22,7 +22,7 @@ module.exports = {
         await interaction.deferReply();
         const channel = interaction.options.getChannel('channel') || await interaction.guild.channels.create(`Members : ${interaction.guild.memberCount}`, {
             reason: 'for stats',
-            type: 'GUILD_VOICE'
+            type: ChannelType.GuildVoice
         });
 
         const newData = { guild: interaction.guildId };

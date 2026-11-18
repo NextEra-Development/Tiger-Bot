@@ -8,7 +8,29 @@ Tiger Bot is an advanced multipurpose Discord bot with slash commands. Originall
 - **Slash Commands**: Utilizes Discord's slash commands for ease of use.
 - **Giveaways**: Integrated with `discord-giveaways` for managing giveaways.
 - **Games**: Includes fun games like fight and rock-paper-scissors.
+- **Moderation**: Kick, ban, timeout/mute, warnings with numbered cases, and bulk message clearing.
+- **Welcome & goodbye**: Configurable messages with optional generated image banners, plus autoroles.
+- **Leveling**: XP, ranks, a server leaderboard, and manual XP adjustments.
 - **Customizable**: Easily configurable to suit different server needs.
+
+## Commands
+
+| Category | Commands |
+|---|---|
+| General | `help`, `ping`, `avatar`, `calculator`, `suggestion`, `server-info`, `user-info`, `role-info`, `membercount` |
+| Moderation | `kick`, `ban`, `unban`, `timeout`, `mute`, `unmute`, `warn`, `warnings`, `clear`, `autorole`, `roles` |
+| Welcome | `welcome`, `goodbye` |
+| Level | `rank`, `xp`, `leaderboard`, `give-xp`, `remove-xp` |
+| Admin | `menu`, `poll`, `poll-show`, `stats`, `ticket`, `pokemon` |
+| Giveaway | `start`, `edit`, `end`, `pause`, `resume`, `reroll` |
+| Fun | `fight`, `pokemons`, `trade`, `rock-paper-scissor` |
+| Owner | `owner` |
+
+Moderation commands check that both you and the bot outrank the target. Every kick, ban, unban, timeout, mute, unmute and warn is stored as a numbered case, which you can view with `/warnings list`.
+
+### Welcome banners
+
+`/welcome` and `/goodbye` can attach a generated image banner (avatar, username, member count) to the message. Banners need the optional `@napi-rs/canvas` package, which `npm install` installs from `package.json`. If it is missing, the bot logs a warning and sends text only. Use `/welcome background <url>` for a custom background image, and `/welcome test` to preview.
 
 ## Installation
 
@@ -35,6 +57,10 @@ Tiger Bot is an advanced multipurpose Discord bot with slash commands. Originall
     ```sh
     npm run dev
     ```
+
+## Deploying slash commands
+
+Run `npm run deploy-commands` once after changing any command definitions (names, descriptions, options, etc.) to register them with Discord. Set `GUILD_ID` in your `.env` to deploy to a single guild for instant updates; leave it unset to deploy globally. `CLIENT_ID` and `TOKEN` are also required.
 
 ## Configuration
 

@@ -1,5 +1,4 @@
-
-  const { MessageAttachment, TextChannel, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: {
@@ -15,35 +14,37 @@ module.exports = {
 
     run: async (client, interaction) => {
 
-        const user = interaction.options.getUser("user") || interaction.user;     
-      const AvatarButtons = new MessageActionRow()
- .addComponents(
- new MessageButton()
- .setLabel('PNG')
- .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "png"}), true)
- .setStyle('LINK'),
- new MessageButton()
- .setLabel('JPG')
- .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "jpg"}), true)
- .setStyle("LINK"),
- new MessageButton()
- .setLabel('WEBP')
- .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "webp"}), true)
- .setStyle("LINK")
- );
- 
+        const user = interaction.options.getUser("user") || interaction.user;
+      const AvatarButtons = new ActionRowBuilder()
+  .addComponents(
+  new ButtonBuilder()
+  .setLabel('PNG')
+  .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "png"}))
+  .setStyle(ButtonStyle.Link),
+  new ButtonBuilder()
+  .setLabel('JPG')
+  .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "jpg"}))
+  .setStyle(ButtonStyle.Link),
+  new ButtonBuilder()
+  .setLabel('WEBP')
+  .setURL(interaction.user.displayAvatarURL({ size: 4096, dynamic: true, format: "webp"}))
+  .setStyle(ButtonStyle.Link)
+  );
+  
 
- let embed = new MessageEmbed()
- .setAuthor(`${user.username}'s Avatar`, interaction.user.displayAvatarURL())
+  let embed = new EmbedBuilder()
+  .setAuthor({ name: `${user.username}'s Avatar`, url: interaction.user.displayAvatarURL() })
 
- .addField('PNG', `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "png" })})`, true, true)
- .addField('JPG', `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "jpg" })})`, true, true)
- .addField('WEBP', `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "webp" })})`, true, true)
+  .addFields([
+    { name: 'PNG', value: `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "png" })})`, inline: true },
+    { name: 'JPG', value: `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "jpg" })})`, inline: true },
+    { name: 'WEBP', value: `\n[\`LINK\`](${user.displayAvatarURL({ size: 4096, dynamic: true, format: "webp" })})`, inline: true }
+  ])
 
- .setImage(user.displayAvatarURL({ size: 4096, dynamic: true }))
- .setThumbnail(interaction.guild.iconURL())
- .setColor('RANDOM')
- .setTimestamp()
- interaction.reply({ embeds: [embed], components:[AvatarButtons] })
+  .setImage(user.displayAvatarURL({ size: 4096, dynamic: true }))
+  .setThumbnail(interaction.guild.iconURL())
+  .setColor('Random')
+  .setTimestamp()
+  interaction.reply({ embeds: [embed], components:[AvatarButtons] })
     }
 }

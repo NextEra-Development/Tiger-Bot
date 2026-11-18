@@ -1,10 +1,12 @@
-const { SlashCommandBuilder, MessageActionRow, MessageButton } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, MessageFlags, PermissionsBitField, SlashCommandBuilder } = require('discord.js');
 const menus = require('../../models/reactionRole');
+const menuInteractions = require('../../interactions/menus');
+const { success, error, warn } = require('../../utils/response');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('menu')
-        .setDescription('Manage guild reaction role')
+        .setDescription('Manage guild reaction role (Requires Manage Server)')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('create')
@@ -13,6 +15,7 @@ module.exports = {
                     option
                         .setName('name')
                         .setDescription('Name of the role menu')
+                        .setAutocomplete(true)
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
@@ -22,6 +25,7 @@ module.exports = {
                     option
                         .setName('name')
                         .setDescription('Name of the role menu')
+                        .setAutocomplete(true)
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
@@ -31,6 +35,7 @@ module.exports = {
                     option
                         .setName('name')
                         .setDescription('Name of the role menu')
+                        .setAutocomplete(true)
                         .setRequired(true))
                 .addChannelOption(option =>
                     option
@@ -45,6 +50,7 @@ module.exports = {
                     option
                         .setName('name')
                         .setDescription('Name of the role menu')
+                        .setAutocomplete(true)
                         .setRequired(true))
                 .addRoleOption(option =>
                     option
@@ -59,155 +65,142 @@ module.exports = {
                     option
                         .setName('name')
                         .setDescription('Name of the role menu')
+                        .setAutocomplete(true)
                         .setRequired(true))
                 .addRoleOption(option =>
                     option
                         .setName('role')
                         .setDescription('Mention the role')
-                        .setRequired(true))),
-    permissions: ["MANAGE_GUILD", "MANAGE_ROLES"], // Corrected permission name
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionsBitField.Flags.ManageGuild | PermissionsBitField.Flags.ManageRoles),
+    permissions: ["MANAGE_GUILD", "MANAGE_ROLES"],
 
     async execute(interaction) {
-        await interaction.reply({ content: `${interaction.client.user.username} is thinking...`, ephemeral: true });
-
         const option = interaction.options.getSubcommand(true).toLowerCase();
         const name = interaction.options.getString("name")?.toLowerCase()?.trim();
-        const menu = await menus.findOne({ name, guild: interaction.guildId });
-        const my_role = interaction.guild.me.roles.highest.position;
         const role = interaction.options.getRole("role");
+
+        // The emoji is collected through a modal, which must be the first response.
+        if (option === 'add-role') {
+            const myRole = interaction.guild.members.me.roles.highest.position;
+            if (role.position >= myRole) {
+                return interaction.reply({
+                    embeds: [error('The provided role is above my highest role.', 'Adjust the role hierarchy and try again.')],
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
+            menuInteractions.setPending(interaction.user.id, { name, roleId: role.id });
+            return interaction.showModal(menuInteractions.buildEmojiModal(role.id));
+        }
+
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        const menu = await menus.findOne({ name, guild: interaction.guildId });
         const channel = interaction.options.getChannel("channel");
 
         switch (option) {
             case "create":
-                await handleCreate(interaction, menu, name);
-                break;
+                return handleCreate(interaction, menu, name);
             case "delete":
-                await handleDelete(interaction, menu, name);
-                break;
+                return handleDelete(interaction, menu, name);
             case "start":
-                await handleStart(interaction, menu, channel);
-                break;
-            case "add-role":
-                await handleAddRole(interaction, menu, role, my_role);
-                break;
+                return handleStart(interaction, menu, channel);
             case "remove-role":
-                await handleRemoveRole(interaction, menu, role);
-                break;
+                return handleRemoveRole(interaction, menu, role, name);
             default:
-                await interaction.editReply({ content: "Invalid subcommand" });
+                return interaction.editReply({ embeds: [error('Invalid subcommand.')] });
         }
     }
 };
 
 async function handleCreate(interaction, menu, name) {
     if (menu) {
-        return interaction.editReply({ content: `A Reaction Role menu already exists with that name. Please use a different name.` });
+        return interaction.editReply({
+            embeds: [error('A reaction role menu with that name already exists.', 'Choose a different name or delete the existing menu.')]
+        });
     }
 
-    await menus.create({ guild: interaction.guildId, name, roles: [], message: "0" }); // Initialize roles as an empty array
-    interaction.editReply({ content: `Role menu created with name: \`${name}\`.` });
+    await menus.create({ guild: interaction.guildId, name, roles: [], message: "0" });
+    return interaction.editReply({
+        embeds: [success(`Role menu created with name: \`${name}\`.`, 'Use `/menu add-role` to add roles to it.')]
+    });
 }
 
 async function handleDelete(interaction, menu, name) {
     if (!menu) {
-        return interaction.editReply({ content: `No Reaction Role menu exists with that name. Please provide a valid menu name.` });
+        return interaction.editReply({
+            embeds: [error('No reaction role menu exists with that name.', 'Use `/menu create` to make one.')]
+        });
     }
 
     await menus.findOneAndDelete({ guild: interaction.guildId, name });
-    interaction.editReply({ content: `Role menu deleted with name: \`${name}\`.` });
+    return interaction.editReply({
+        embeds: [success(`Role menu deleted with name: \`${name}\`.`)]
+    });
 }
 
 async function handleStart(interaction, menu, channel) {
-    if (channel.type !== "GUILD_TEXT" && channel.type !== "GUILD_NEWS") {
-        return interaction.editReply({ content: "Invalid channel was provided" });
+    if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildNews) {
+        return interaction.editReply({
+            embeds: [error('Invalid channel was provided.', 'Pick a text or news channel.')]
+        });
     }
     if (!menu?.roles?.length) {
-        return interaction.editReply({ content: "This menu has 0 roles." });
+        return interaction.editReply({
+            embeds: [warn('This menu has 0 roles.', 'Add at least one role with `/menu add-role` before starting it.')]
+        });
     }
 
     const { content, rows } = createMenuContentAndButtons(interaction, menu);
 
+    // Public panel send — must stay public.
     const msg = await channel.send({ content, components: rows });
 
     await menus.findOneAndUpdate({ name: menu.name, guild: interaction.guildId }, { message: msg.id });
-
-    interaction.editReply({ content: "Menu started successfully" });
+    return interaction.editReply({
+        embeds: [success('Menu started successfully.')]
+    });
 }
 
 function createMenuContentAndButtons(interaction, menu) {
     let content = `Reaction Menu : **${menu.name}**\n\nReact to get yourself a role\n\n`,
-        rows = [new MessageActionRow()], index;
+        rows = [new ActionRowBuilder()], index;
 
     menu.roles.forEach((v, i) => {
         content += `> ${interaction.guild.emojis.cache.get(v.emoji)?.toString() || v.emoji} : \`${interaction.guild.roles.cache.get(v.role).name}\`\n\n`;
 
         index = parseInt(i / 5);
-        const button = new MessageButton({
-            customId: `reaction_role_${i}`,
-            style: "SECONDARY",
-            emoji: v.emoji,
-        });
+        const button = new ButtonBuilder()
+            .setCustomId(`reaction_role_${i}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(v.emoji);
 
-        rows[index] ? rows[index].addComponents(button) : rows[index] = new MessageActionRow().addComponents(button);
+        rows[index] ? rows[index].addComponents(button) : rows[index] = new ActionRowBuilder().addComponents(button);
     });
 
     return { content, rows };
 }
 
-async function handleAddRole(interaction, menu, role, my_role) {
+async function handleRemoveRole(interaction, menu, role, name) {
     if (!menu) {
-        return interaction.editReply({ content: `Reaction Role menu does not exist with that name. Please provide a valid menu name.` });
-    }
-
-    if (role.position >= my_role) {
-        return interaction.editReply({ content: `The provided role is above my highest role. Please adjust the role hierarchy and try again.` });
-    }
-
-    const msg = await interaction.channel.send({ content: `React with the emoji you want for this role` });
-
-    const reactions = await msg.awaitReactions({
-        errors: ["time"],
-        filter: (r, u) => u.id === interaction.user.id,
-        max: 1,
-        time: 300000
-    }).catch(e => { });
-
-    const emoji = reactions.first()?.emoji;
-
-    if (!emoji) {
-        return interaction.editReply({ content: "You took too much time to respond" });
-    }
-
-    if (isRoleOrEmojiInMenu(menu, role, emoji)) {
-        return interaction.editReply({ content: `Reaction Role menu already has either the provided role or the emoji` });
-    }
-
-    menu.roles.push({ role: role.id, emoji: emoji.id || emoji.name });
-
-    await menus.findOneAndUpdate({ name, guild: interaction.guildId }, { roles: menu.roles });
-
-    interaction.editReply({ content: `Added role \`${role.name}\` with emoji: ${emoji.toString()} for menu: \`${menu.name}\`` });
-    await msg.delete();
-}
-
-async function handleRemoveRole(interaction, menu, role) {
-    if (!menu) {
-        return interaction.editReply({ content: `Reaction Role menu does not exist with that name. Please provide a valid menu name.` });
+        return interaction.editReply({
+            embeds: [error('Reaction role menu does not exist with that name.', 'Use `/menu create` to make one.')]
+        });
     }
 
     if (!isRoleInMenu(menu, role)) {
-        return interaction.editReply({ content: `Reaction Role menu does not have this role as part of it` });
+        return interaction.editReply({
+            embeds: [error('Reaction role menu does not have this role as part of it.')]
+        });
     }
 
     menu.roles = menu.roles.filter((v) => v.role !== role.id);
-
     await menus.findOneAndUpdate({ name, guild: interaction.guildId }, { roles: menu.roles });
 
-    interaction.editReply({ content: `Removed role \`${role.name}\` from menu: \`${menu.name}\`` });
-}
-
-function isRoleOrEmojiInMenu(menu, role, emoji) {
-    return menu.roles.some(v => v.role === role.id) || menu.roles.some(v => v.emoji === emoji.id || v.emoji === emoji.name);
+    return interaction.editReply({
+        embeds: [success(`Removed role \`${role.name}\` from menu \`${menu.name}\``)]
+    });
 }
 
 function isRoleInMenu(menu, role) {
