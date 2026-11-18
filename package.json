@@ -1,0 +1,28 @@
+{
+    "name": "tiger-bot",
+    "version": "1.0.0",
+    "description": "An Advanced Beta Multipurpose Bot with Slash Commands",
+    "main": "index.js",
+    "scripts": {
+        "dev": "node index.js",
+        "deploy-commands": "node deploy-commands.js"
+    },
+    "author": "MisterBashyal",
+    "dependencies": {
+        "@discordjs/builders": "^1.10.1",
+        "@discordjs/rest": "^2.4.3",
+        "discord-fight-game": "^1.0.3",
+        "discord-giveaways": "^4.5.1",
+        "discord-rock-paper-scissor": "^1.2.2",
+        "discord.js": "^14.18.0",
+        "dotenv": "^16.4.7",
+        "mathjs": "^14.4.0",
+        "mongodb": "^6.15.0",
+        "mongoose": "^6.13.8",
+        "node-emoji": "^2.2.0",
+        "pokecord": "^1.0.1"
+    },
+    "optionalDependencies": {
+        "@napi-rs/canvas": "^0.1.65"
+    }
+}
